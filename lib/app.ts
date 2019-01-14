@@ -2,27 +2,36 @@ import * as express from "express";
 import * as mongoose from "mongoose";
 import * as bodyParser from "body-parser";
 import { Routes } from "./routes/crmRoutes";
-
+import { openConnection } from "./config";
+import { mongoDbAddress } from "./common/constants";
 
 class App {
   public app: express.Application;
   public routePrv: Routes = new Routes();
-  public mongoUrl: string = 'mongodb://localhost:27017/CRMdb'; 
 
   constructor() {
-    this.app = express();
-    this.config();
+    this.doCreateApp();
     this.routePrv.routes(this.app);
-    this.mongoSetup();
+    this.connectDBServer();
   }
-  private mongoSetup(): void{
-    mongoose.connect(this.mongoUrl,{ useNewUrlParser: true });    
-}
-  private config(): void {
-    // support application/json type post data
+
+  private doCreateApp() {
+    this.app = express();
+
+    // parse application/x-www-form-urlencoded
     this.app.use(bodyParser.json());
     //support application/x-www-form-urlencoded post data
     this.app.use(bodyParser.urlencoded({ extended: false }));
+  }
+
+  private async connectDBServer() {
+    try {
+      await openConnection({ mongoDbAddress });
+      console.log("DONE: Connected to mongoose.");
+    } catch (error) {
+      console.error("ERROR: to connect to mongoose.");
+      console.log(error);
+    }
   }
 }
 
